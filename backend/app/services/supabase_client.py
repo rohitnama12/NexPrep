@@ -3,9 +3,17 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+# Global Singleton Instance 
+_supabase_instance: Client = None
+
 def get_supabase_client() -> Client:
+    global _supabase_instance
+    
     if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
         raise ValueError("Supabase credentials are not configured")
     
-    supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-    return supabase
+    # Agar client pehle se bana hua hai, toh wahi wapas karo (Connection reuse)
+    if _supabase_instance is None:
+        _supabase_instance = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+        
+    return _supabase_instance
