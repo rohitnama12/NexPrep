@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Send, User, Bot, Loader2, Upload, CheckCircle2, Plus, MessageSquare } from 'lucide-react';
+import { Send, User, Bot, Loader2, Upload, CheckCircle2, Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import { fetchApi, fetchApiFormData } from '@/utils/apiClient';
 
@@ -85,6 +85,27 @@ export default function TutorPage() {
   const handleNewChat = () => {
     setActiveSessionId(null);
     clearMessages();
+  };
+
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    try {
+      const res = await fetchApi(`/tutor/sessions/${sessionId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        if (activeSessionId === sessionId) {
+          setActiveSessionId(null);
+          clearMessages();
+        }
+        toast.success('Session deleted.');
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'Failed to delete session.');
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err);
+      toast.error('Failed to delete session.');
+    }
   };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,17 +264,33 @@ export default function TutorPage() {
             </div>
           ) : (
             sessions.map((session) => (
-              <button
+              <div
                 key={session.id}
-                onClick={() => setActiveSessionId(session.id)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors ${activeSessionId === session.id
-                  ? 'bg-orange-50 dark:bg-white/10 text-orange-600 dark:text-orange-400'
-                  : 'hover:bg-zinc-200 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300'
-                  }`}
+                className={`group w-full flex items-center gap-2 rounded-lg transition-colors ${
+                  activeSessionId === session.id
+                    ? 'bg-orange-50 dark:bg-white/10'
+                    : 'hover:bg-zinc-200 dark:hover:bg-white/5'
+                }`}
               >
-                <MessageSquare size={16} className={activeSessionId === session.id ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-600 dark:text-zinc-500'} />
-                <span className="truncate text-sm font-medium">{session.title}</span>
-              </button>
+                <button
+                  onClick={() => setActiveSessionId(session.id)}
+                  className={`flex-1 text-left px-3 py-2.5 flex items-center gap-3 min-w-0 ${
+                    activeSessionId === session.id
+                      ? 'text-orange-600 dark:text-orange-400'
+                      : 'text-zinc-700 dark:text-zinc-300'
+                  }`}
+                >
+                  <MessageSquare size={16} className={activeSessionId === session.id ? 'text-orange-600 dark:text-orange-400 shrink-0' : 'text-zinc-600 dark:text-zinc-500 shrink-0'} />
+                  <span className="truncate text-sm font-medium">{session.title}</span>
+                </button>
+                <button
+                  onClick={(e) => handleDeleteSession(e, session.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 mr-1 rounded-md text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shrink-0"
+                  title="Delete session"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             ))
           )}
         </div>

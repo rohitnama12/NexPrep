@@ -70,7 +70,7 @@ async def generate_problem(
                 query = query.contains("playlists", [body.playlist])
                 
             response = query.execute()
-            if response.data and len(response.data) > 0:
+            if response and response.data and len(response.data) > 0:
                 # Filter out previously solved static problems
                 candidate_key = f"{body.topic}|{body.difficulty}"
                 unsolved = [p for p in response.data if f"{p.get('topic','')}|{p.get('difficulty','')}" not in solved_slugs]
@@ -347,9 +347,13 @@ async def analyze_complexity(request: Request, body: ComplexityRequest, user: di
 async def get_historical_problem(request: Request, replay_id: str, user: dict = Depends(get_current_user), credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         supabase = get_supabase_client()
-        response = supabase.table("solved_challenges").select("*").eq("id", replay_id).eq("user_id", user["id"]).execute()
+        user_id = user.id if hasattr(user, "id") else user.get("id") if isinstance(user, dict) else None
+        if not user_id:
+            return {"status": "error", "message": "Cannot resolve user identity", "data": None}
+
+        response = supabase.table("solved_challenges").select("*").eq("id", replay_id).eq("user_id", user_id).execute()
         
-        if not response.data or len(response.data) == 0:
+        if not response or not response.data or len(response.data) == 0:
             return {"status": "error", "message": "Historical problem not found", "data": None}
             
         record = response.data[0]
@@ -370,9 +374,13 @@ async def get_historical_problem(request: Request, replay_id: str, user: dict = 
 async def get_contextual_submissions(request: Request, replay_id: str, user: dict = Depends(get_current_user), credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         supabase = get_supabase_client()
-        reference_response = supabase.table("solved_challenges").select("topic", "difficulty").eq("id", replay_id).eq("user_id", user["id"]).execute()
+        user_id = user.id if hasattr(user, "id") else user.get("id") if isinstance(user, dict) else None
+        if not user_id:
+            return {"status": "success", "data": []}
+
+        reference_response = supabase.table("solved_challenges").select("topic", "difficulty").eq("id", replay_id).eq("user_id", user_id).execute()
         
-        if not reference_response.data or len(reference_response.data) == 0:
+        if not reference_response or not reference_response.data or len(reference_response.data) == 0:
             return {"status": "success", "data": []}
             
         topic = reference_response.data[0]["topic"]
@@ -383,12 +391,12 @@ async def get_contextual_submissions(request: Request, replay_id: str, user: dic
             .select("id, topic, category, difficulty, passed, code_snippet, created_at")
             .eq("topic", topic)
             .eq("difficulty", difficulty)
-            .eq("user_id", user["id"])
+            .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(50)
             .execute()
         )
-        return {"status": "success", "data": response.data}
+        return {"status": "success", "data": response.data if response and response.data else []}
     except Exception as e:
         import logging
         logging.error(f"Failed to fetch contextual submissions for replay {replay_id}: {e}")
