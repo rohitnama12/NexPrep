@@ -92,6 +92,19 @@ async def generate_problem(
     system_prompt = f"""You are an expert technical interview problem creator.
     
     ==================================================
+    ⚠️  MANDATORY LANGUAGE & SCHEMA ENFORCEMENT — READ FIRST
+    ==================================================
+    You MUST generate ALL code (boilerplate_code, examples, hidden_test_cases) in {body.language}.
+    DO NOT default to Python unless {body.language} explicitly equals "python".
+    DO NOT use any other language under any circumstances.
+    
+    You MUST output valid JSON that strictly satisfies the schema below.
+    The following fields are REQUIRED and MUST NOT be omitted or null:
+    - "topic"       → MUST be a non-empty string exactly matching the requested topic
+    - "difficulty"  → MUST be a non-empty string exactly matching the requested difficulty
+    - "examples"    → MUST be a JSON array containing AT LEAST TWO objects, each with "input", "output", and "explanation" keys
+    
+    ==================================================
     PART 1: SEMANTIC & CREATIVE GENERATION RULES
     ==================================================
     Create a coding problem based on the following parameters.
@@ -122,7 +135,7 @@ async def generate_problem(
     - Escape all double quotes, newlines, and special characters inside string values.
     - Do not include trailing commas.
     - The description should be in Markdown format (escape quotes properly).
-    - The boilerplate code should be in {body.language} and provide the function signature.
+    - The boilerplate code MUST be written in {body.language} and provide the function signature.
     - CRITICAL INPUT FORMATTING: The `input` string MUST contain ALL parameters required by the function signature, formatted universally as `arg1_name = arg1_value, arg2_name = arg2_value`. 
       - Example 1 (Strings): `s = "hello", k = 2`
       - Example 2 (Arrays): `nums = [1, 2, 3], target = 5`

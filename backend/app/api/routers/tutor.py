@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from typing import List
@@ -94,6 +94,50 @@ async def get_session_messages(
         logger.error(f"Error fetching session messages: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch session messages")
 
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session(
+    session_id: str,
+    user: dict = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Deletes a tutor session and all its messages.
+    Enforces ownership: only the authenticated user who owns the session can delete it.
+    """
+    try:
+        supabase = get_auth_supabase(credentials.credentials)
+
+        # Ownership verification: fetch session and confirm it belongs to this user
+        ownership_check = (
+            supabase.table("tutor_sessions")
+            .select("id")
+            .eq("id", session_id)
+            .eq("user_id", user.id)
+            .maybe_single()
+            .execute()
+        )
+
+        if not ownership_check or not ownership_check.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found or you do not have permission to delete it."
+            )
+
+        # Delete all child messages first (in case FK constraints exist without CASCADE)
+        supabase.table("tutor_messages").delete().eq("session_id", session_id).execute()
+
+        # Delete the session itself
+        supabase.table("tutor_sessions").delete().eq("id", session_id).eq("user_id", user.id).execute()
+
+        # 204 No Content — FastAPI returns no body automatically
+        return None
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete session")
+
 @router.post("/chat")
 @limiter.limit("5/minute")
 async def chat_endpoint(
@@ -105,15 +149,25 @@ async def chat_endpoint(
     token = credentials.credentials
     supabase = get_auth_supabase(token)
     
-    # Fetch resume_text for personalized tutoring
+    # MANDATE 2 FIX: Fetch resume_text with strict defensive extraction.
+    # Uses maybe_single().execute() — never throws AttributeError or NoneType crash.
+    # Falls back to empty dict {} so _build_system_prompt() continues safely.
     resume_text = chat_request.resume_context
     if not resume_text:
         try:
-            result = supabase.table("profiles").select("resume_text").eq("id", user.id).maybe_single().execute()
-            if result.data and result.data.get("resume_text"):
-                resume_text = result.data["resume_text"]
+            response = (
+                supabase.table("profiles")
+                .select("resume_text")
+                .eq("id", user.id)
+                .maybe_single()
+                .execute()
+            )
+            # STRICT defensive extraction: never evaluate to None
+            resume_data = response.data if (response and hasattr(response, "data") and response.data) else {}
+            resume_text = resume_data.get("resume_text") if isinstance(resume_data, dict) else None
         except Exception as e:
             logger.warning(f"Could not fetch resume for personalized tutoring: {e}")
+            resume_text = None
         
     session_id = chat_request.session_id
     try:
