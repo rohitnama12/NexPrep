@@ -22,11 +22,11 @@ async def lifespan(app: FastAPI):
     
     # Run heavy background loaders safely without breaking main event loop
     try:
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
         # run_in_executor se background threads main pool connectivity ko choke nahi karenge
-        loop.run_in_executor(None, run_massive_import)
-        loop.run_in_executor(None, run_tracker_import)
-        print("[Lifespan] Background seeders started successfully in isolated executors.")
+        # loop.run_in_executor(None, run_massive_import)
+        # loop.run_in_executor(None, run_tracker_import)
+        print("[Lifespan] Background seeders disabled to prevent pool starvation.")
     except Exception as e:
         print(f"[Lifespan] Failed to start seeders: {e}")
         

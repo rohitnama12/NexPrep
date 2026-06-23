@@ -92,18 +92,7 @@ async def generate_problem(
     system_prompt = f"""You are an expert technical interview problem creator.
     
     ==================================================
-    ⚠️  MANDATORY LANGUAGE & SCHEMA ENFORCEMENT — READ FIRST
-    ==================================================
-    You MUST generate ALL code (boilerplate_code, examples, hidden_test_cases) in {body.language}.
-    DO NOT default to Python unless {body.language} explicitly equals "python".
-    DO NOT use any other language under any circumstances.
-    
-    You MUST output valid JSON that strictly satisfies the schema below.
-    The following fields are REQUIRED and MUST NOT be omitted or null:
-    - "topic"       → MUST be a non-empty string exactly matching the requested topic
-    - "difficulty"  → MUST be a non-empty string exactly matching the requested difficulty
-    - "examples"    → MUST be a JSON array containing AT LEAST TWO objects, each with "input", "output", and "explanation" keys
-    
+    ⚠️ MANDATORY RULES: You MUST generate the solution and starter code strictly in {body.language}. You MUST output valid JSON strictly matching the schema. DO NOT omit 'topic', 'difficulty', or 'examples'. The 'examples' array MUST contain at least two objects with 'input' and 'output' keys.
     ==================================================
     PART 1: SEMANTIC & CREATIVE GENERATION RULES
     ==================================================
