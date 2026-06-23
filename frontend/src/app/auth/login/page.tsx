@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Mail, Lock, LogIn, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useAuthStore } from '@/store/authStore';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function LoginPage() {
 
       if (data.session) {
         toast.success("Successfully logged in!");
+        await useAuthStore.getState().refreshSession();
+        router.refresh();
         router.push('/arena');
       }
 

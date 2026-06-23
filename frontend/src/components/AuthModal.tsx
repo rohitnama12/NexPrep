@@ -63,9 +63,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           onClose();
         } else if (data.session) {
           toast.success("Registration successful!");
-          await initialize();
+          await useAuthStore.getState().refreshSession();
+          router.refresh();
           onClose();
-          router.push('/dashboard');
+          router.push('/arena');
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -80,9 +81,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         }
         if (data.session) {
           toast.success("Successfully logged in!");
-          await initialize();
+          await useAuthStore.getState().refreshSession();
+          router.refresh();
           onClose();
-          router.push('/dashboard');
+          router.push('/arena');
         }
       }
     } catch (err: any) {

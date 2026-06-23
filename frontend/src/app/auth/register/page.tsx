@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Mail, Lock, UserPlus, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useAuthStore } from '@/store/authStore';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -47,6 +48,8 @@ export default function RegisterPage() {
         setConfirmPassword('');
       } else if (data.session) {
         toast.success("Registration successful!");
+        await useAuthStore.getState().refreshSession();
+        router.refresh();
         router.push('/arena');
       }
 

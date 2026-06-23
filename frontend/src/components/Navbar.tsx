@@ -25,8 +25,8 @@ export function Navbar() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
-    // Explicit refresh of session on signout
-    await initialize();
+    await useAuthStore.getState().refreshSession(); // Explicitly clear session state natively
+    router.refresh();
     router.push('/');
   };
 

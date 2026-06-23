@@ -7,7 +7,8 @@ interface AuthState {
   session: Session | null;
   isLoading: boolean;
   isInitialized: boolean;
-  initialize: () => void;
+  initialize: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
 }
@@ -39,6 +40,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: session?.user ?? null,
         isLoading: false
       });
+    });
+  },
+
+  refreshSession: async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    set({ 
+      session, 
+      user: session?.user ?? null,
+      isLoading: false,
+      isInitialized: true
     });
   },
 
