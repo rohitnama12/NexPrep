@@ -21,25 +21,11 @@ async def lifespan(app: FastAPI):
     print("[Lifespan] Global Supabase Connection Pool Active.")
     
     # Run heavy background loaders safely without breaking main event loop
-    # Each seeder gets its own isolated Supabase client inside its own thread
-    # to prevent connection starvation on the main request pool.
     try:
         loop = asyncio.get_event_loop()
-
-        def _safe_massive_import():
-            try:
-                run_massive_import()
-            except Exception as e:
-                print(f"[Lifespan] MassiveLoader seeder failed (non-fatal): {e}")
-
-        def _safe_tracker_import():
-            try:
-                run_tracker_import()
-            except Exception as e:
-                print(f"[Lifespan] TrackerLoader seeder failed (non-fatal): {e}")
-
-        loop.run_in_executor(None, _safe_massive_import)
-        loop.run_in_executor(None, _safe_tracker_import)
+        # run_in_executor se background threads main pool connectivity ko choke nahi karenge
+        loop.run_in_executor(None, run_massive_import)
+        loop.run_in_executor(None, run_tracker_import)
         print("[Lifespan] Background seeders started successfully in isolated executors.")
     except Exception as e:
         print(f"[Lifespan] Failed to start seeders: {e}")

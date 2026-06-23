@@ -45,21 +45,21 @@ class TestCase(BaseModel):
     expected_output: str
 
 class Example(BaseModel):
-    input: str = ""
-    output: str = ""
-    explanation: Optional[str] = ""
+    input: str
+    output: str
+    explanation: str
 
 class GeneratedProblem(BaseModel):
-    title: str = "Coding Challenge"
-    description: str = "Complete the coding challenge."
-    topic: Optional[str] = "General"
-    difficulty: Optional[str] = "Medium"
-    constraints: Optional[List[str]] = []
-    examples: Optional[List[Example]] = []
-    boilerplate_code: str = "# Write your code here\n"
-    hidden_test_cases: Optional[List[TestCase]] = []
-    playlists: Optional[List[str]] = []
-    solution_article: Optional[str] = ""
+    title: str
+    description: str
+    topic: str
+    difficulty: str
+    constraints: List[str]
+    examples: List[Example]
+    boilerplate_code: str
+    hidden_test_cases: List[TestCase]
+    playlists: List[str] = []
+    solution_article: str = ""
 
 class ProblemRequest(BaseModel):
     category: Optional[str] = "DSA"

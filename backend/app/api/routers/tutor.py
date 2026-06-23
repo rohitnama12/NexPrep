@@ -75,7 +75,7 @@ async def get_sessions(
     try:
         supabase = get_auth_supabase(credentials.credentials)
         result = supabase.table("tutor_sessions").select("*").eq("user_id", user.id).order("created_at", desc=True).execute()
-        return result.data if result and result.data else []
+        return result.data
     except Exception as e:
         logger.error(f"Error fetching tutor sessions: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch tutor sessions")
@@ -89,7 +89,7 @@ async def get_session_messages(
     try:
         supabase = get_auth_supabase(credentials.credentials)
         result = supabase.table("tutor_messages").select("*").eq("session_id", session_id).order("created_at", desc=False).execute()
-        return result.data if result and result.data else []
+        return result.data
     except Exception as e:
         logger.error(f"Error fetching session messages: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch session messages")
@@ -110,7 +110,7 @@ async def chat_endpoint(
     if not resume_text:
         try:
             result = supabase.table("profiles").select("resume_text").eq("id", user.id).maybe_single().execute()
-            if result and result.data and result.data.get("resume_text"):
+            if result.data and result.data.get("resume_text"):
                 resume_text = result.data["resume_text"]
         except Exception as e:
             logger.warning(f"Could not fetch resume for personalized tutoring: {e}")
@@ -125,7 +125,7 @@ async def chat_endpoint(
                 "user_id": user.id,
                 "title": title
             }).execute()
-            if session_result and session_result.data:
+            if session_result.data:
                 session_id = session_result.data[0]["id"]
             else:
                 raise Exception("Failed to create session")
@@ -167,34 +167,3 @@ async def parse_resume(
     except Exception as e:
         logger.error(f"Failed to parse resume: {e}")
         raise HTTPException(status_code=500, detail="Failed to parse PDF resume")
-
-
-@router.delete("/sessions/{session_id}")
-async def delete_session(
-    session_id: str,
-    user: dict = Depends(get_current_user),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    try:
-        supabase = get_auth_supabase(credentials.credentials)
-
-        # Verify session ownership before deletion
-        session_check = supabase.table("tutor_sessions").select("id").eq("id", session_id).eq("user_id", user.id).execute()
-        if not session_check or not session_check.data or len(session_check.data) == 0:
-            raise HTTPException(status_code=404, detail="Session not found or not owned by user")
-
-        # Delete all messages belonging to this session first (cascade)
-        try:
-            supabase.table("tutor_messages").delete().eq("session_id", session_id).execute()
-        except Exception as msg_err:
-            logger.warning(f"Failed to delete messages for session {session_id}: {msg_err}")
-
-        # Delete the session record itself
-        supabase.table("tutor_sessions").delete().eq("id", session_id).eq("user_id", user.id).execute()
-
-        return {"status": "success", "message": "Session deleted"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error deleting session {session_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete session")
