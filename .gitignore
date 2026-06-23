@@ -1,0 +1,16 @@
+# Frontend ignores
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# Backend ignores
+backend/venv/
+backend/__pycache__/
+backend/.env
+
+# OS ignores
+.DS_Store
+
+# ui-ux-pro-max-skill 
+.agent/
+ui-ux-pro-max-skill/
