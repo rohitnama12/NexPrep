@@ -457,7 +457,7 @@ function ArenaPageContent() {
   );
 
   return (
-    <div className="flex-1 flex flex-col w-full h-[calc(100vh-96px)] overflow-hidden bg-white dark:bg-[#050505] text-zinc-800 dark:text-zinc-200">
+    <div className="fixed inset-0 top-24 flex flex-col overflow-hidden bg-white dark:bg-[#050505] text-zinc-800 dark:text-zinc-200">
       <AnimatePresence>
         {viewMode === 'filters' && !isLoadingReplay && renderCommandPaletteModal()}
       </AnimatePresence>

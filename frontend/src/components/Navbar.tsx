@@ -7,12 +7,15 @@ import { Brain, Code2, MessagesSquare, LogOut, User as UserIcon, Activity, ListT
 import { useAuthStore } from "@/store/authStore";
 import { createClient } from "@/utils/supabase/client";
 import { ThemeToggle } from "./ThemeToggle";
+import { AuthModal } from "./AuthModal";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isInitialized, initialize } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
     initialize();
@@ -22,7 +25,9 @@ export function Navbar() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setIsDropdownOpen(false);
-    router.push('/auth/login');
+    // Explicit refresh of session on signout
+    await initialize();
+    router.push('/');
   };
 
   const routes = [
@@ -111,17 +116,29 @@ export function Navbar() {
               </div>
             ) : (
               <div className="flex gap-2">
-                <Link href="/auth/login" className="hidden sm:flex text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 transition-colors items-center">
+                <button 
+                  onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }} 
+                  className="hidden sm:flex text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 transition-colors items-center"
+                >
                   Log In
-                </Link>
-                <Link href="/auth/register" className="text-sm font-medium bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-90 text-white px-4 py-1.5 rounded-full transition-all duration-300 hover:scale-105 shadow-md shadow-amber-500/20">
+                </button>
+                <button 
+                  onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); }} 
+                  className="text-sm font-medium bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-90 text-white px-4 py-1.5 rounded-full transition-all duration-300 hover:scale-105 shadow-md shadow-amber-500/20 cursor-pointer"
+                >
                   Sign Up
-                </Link>
+                </button>
               </div>
             )}
           </div>
         </div>
       </nav>
+      
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        initialMode={authMode} 
+      />
     </div>
   );
 }
