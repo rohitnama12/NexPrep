@@ -109,7 +109,7 @@ async def chat_endpoint(
     resume_text = chat_request.resume_context
     if not resume_text:
         try:
-            result = supabase.table("profiles").select("resume_text").eq("id", user.id).maybeSingle().execute()
+            result = supabase.table("profiles").select("resume_text").eq("id", user.id).maybe_single().execute()
             if result.data and result.data.get("resume_text"):
                 resume_text = result.data["resume_text"]
         except Exception as e:
