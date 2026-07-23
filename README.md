@@ -71,3 +71,100 @@ Follow these steps to set up the project locally on your machine.
 ```bash
 git clone [https://github.com/rohitnama12/NexPrep.git](https://github.com/rohitnama12/NexPrep.git)
 cd NexPrep
+
+```
+
+### 2. Backend Setup & Execution
+
+Open a terminal and navigate to the `backend` directory:
+
+```bash
+cd backend
+
+```
+
+**Create a virtual environment and install dependencies:**
+
+```bash
+# For macOS/Linux:
+python3 -m venv venv
+source venv/bin/activate
+
+# For Windows:
+python -m venv venv
+venv\Scripts\activate
+
+# Install requirements
+pip install -r requirements.txt
+
+```
+
+**Environment Variables:**
+Create a `.env` file in the `backend` directory and add your credentials:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_service_role_key
+OPENAI_API_KEY=your_openai_api_key
+
+```
+
+**Run the FastAPI Server:**
+
+```bash
+uvicorn app.main:app --reload --port 7860
+
+```
+
+*The backend API will now be running at `http://localhost:7860`.*
+
+### 3. Frontend Setup & Execution
+
+Open a new terminal window and navigate to the `frontend` directory:
+
+```bash
+cd frontend
+
+```
+
+**Install dependencies:**
+
+```bash
+npm install
+
+```
+
+**Environment Variables:**
+Create a `.env.local` file in the `frontend` directory:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:7860/api/v1
+
+```
+
+**Run the Next.js Development Server:**
+
+```bash
+npm run dev
+
+```
+
+*The frontend application will now be running at `http://localhost:3000`.*
+
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/rohitnama12/NexPrep/issues).
+
+## 📄 License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
+**Developed with ❤️ by [Rohit Nama**](https://github.com/rohitnama12)
+*AI Engineer*
+
+``
