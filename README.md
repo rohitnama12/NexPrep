@@ -1,11 +1,24 @@
-🚀 NexPrep
-Next-Generation AI Interview & Coding Platform
- 
+<div align="center">
+  <h1>🚀 NexPrep</h1>
+  <p><b>Next-Generation AI Interview & Coding Platform</b></p>
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](#)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](#)
+  [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](#)
+  [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](#)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
+
+---
+
 ## 💡 Overview
 
 **NexPrep** is a comprehensive, full-stack Artificial Intelligence platform engineered to revolutionize technical interview preparation. It bridges the gap between theoretical knowledge and practical execution by providing a highly personalized, context-aware AI Tutor and a dynamic, multi-language coding arena. 
 
 Built with scalability and modern UX in mind, NexPrep utilizes Retrieval-Augmented Generation (RAG) principles to adapt to a user's resume and tracks their algorithmic mastery in real-time through gamified analytics.
+
+---
 
 ## ✨ Key Features
 
@@ -14,6 +27,8 @@ Built with scalability and modern UX in mind, NexPrep utilizes Retrieval-Augment
 *   **⚙️ Real-Time Code Execution:** Integrated with the Piston API to securely run and evaluate user-submitted code against AI-generated hidden test cases.
 *   **📊 Gamified Analytics Dashboard:** Track your progress with GitHub-style activity heatmaps, difficulty distribution charts, and comprehensive submission logs.
 *   **⚡ High-Performance UX:** Features Optimistic UI mutations (e.g., instant chat deletion) and portal-based zero-refresh authentication to bypass React router freezes.
+
+---
 
 ## 🛠️ Tech Stack & Architecture
 
@@ -31,6 +46,8 @@ Built with scalability and modern UX in mind, NexPrep utilizes Retrieval-Augment
 *   **Infrastructure:** Supabase (PostgreSQL)
 *   **Authentication:** Supabase Auth (with edge-optimized local JWT validation)
 
+---
+
 ## 🧠 Engineering Highlights (Under the Hood)
 
 *   **Zero-Downtime Connection Pooling:** Decoupled background database seeders from the main FastAPI `lifespan` event loop to prevent PostgreSQL pool starvation, ensuring 100% uptime for high-concurrency tracker and analytics endpoints.
@@ -38,15 +55,19 @@ Built with scalability and modern UX in mind, NexPrep utilizes Retrieval-Augment
 *   **Strict LLM Output Enforcement:** Engineered advanced system preamble prompts to force non-deterministic LLMs to output 100% compliant JSON structures for coding challenges, completely bypassing the need for relaxed or optional Pydantic fields.
 *   **Defensive API Design:** Built resilient extraction chains (e.g., `maybe_single().execute()`) and fail-safes against `NoneType` errors to ensure backend stability against malformed database records.
 
+---
+
 ## 🚀 Local Development Setup
 
-### Prerequisites
-*   Node.js (v18+)
-*   Python (3.10+)
-*   Supabase Account (for Database & Auth)
-*   OpenAI API Key
+Follow these steps to set up the project locally on your machine.
 
-### 1. Clone the repository
+### Prerequisites
+*   [Node.js](https://nodejs.org/en/) (v18 or higher)
+*   [Python](https://www.python.org/downloads/) (3.10 or higher)
+*   [Supabase Account](https://supabase.com/) (for Database & Authentication)
+*   [OpenAI API Key](https://platform.openai.com/)
+
+### 1. Clone the Repository
 ```bash
 git clone [https://github.com/rohitnama12/NexPrep.git](https://github.com/rohitnama12/NexPrep.git)
 cd NexPrep
