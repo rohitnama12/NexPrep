@@ -164,7 +164,9 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 
 ---
 
-**Developed with ❤️ by [Rohit Nama**](https://github.com/rohitnama12)
-*AI Engineer*
+**Developed with ❤️ by [Rohit Nama**](https://github.com/rohitnama12)**
+**email : rohitnama101@gmail.com**
+**linkedin : https://www.linkedin.com/in/rohitnama/**
+**AI Engineer**
 
 ``
