@@ -17,3 +17,7 @@ def get_supabase_client() -> Client:
         _supabase_instance = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         
     return _supabase_instance
+
+def reset_supabase_client():
+    global _supabase_instance
+    _supabase_instance = None

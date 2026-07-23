@@ -6,9 +6,47 @@ from app.core.security import get_current_user, security
 from app.services.supabase_client import get_supabase_client
 from app.services.db_client import get_auth_supabase
 import logging
+import time
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# --- IN-MEMORY CACHE FOR STATIC DSA SHEETS ---
+_STATIC_DATA_CACHE = {
+    "all_problems": None,
+    "metadata": None,
+    "last_fetched": 0
+}
+CACHE_TTL = 3600  # Cache for 1 hour
+
+async def _get_all_problems():
+    current_time = time.time()
+    if _STATIC_DATA_CACHE["all_problems"] is not None and (current_time - _STATIC_DATA_CACHE["last_fetched"]) < CACHE_TTL:
+        return _STATIC_DATA_CACHE["all_problems"]
+        
+    supabase = get_supabase_client()
+    query = supabase.table("dsa_sheets").select("*").order("topic").order("difficulty").order("id")
+    # Always filter out NULL topic and difficulty values
+    query = query.filter("topic", "not.is", "null").filter("difficulty", "not.is", "null")
+
+    all_data = []
+    chunk_size = 1000
+    start = 0
+    while True:
+        chunk_response = query.range(start, start + chunk_size - 1).execute()
+        chunk_data = chunk_response.data
+        all_data.extend(chunk_data)
+        if len(chunk_data) < chunk_size:
+            break
+        start += chunk_size
+        
+    _STATIC_DATA_CACHE["all_problems"] = all_data
+    _STATIC_DATA_CACHE["last_fetched"] = current_time
+    
+    # Also clear metadata cache so it gets rebuilt from the fresh data
+    _STATIC_DATA_CACHE["metadata"] = None
+    return all_data
+
 
 
 @router.get("/problems")
@@ -23,46 +61,35 @@ async def get_tracker_problems(
     Public read — uses the service-role Supabase client (no RLS restriction needed for reads).
     """
     try:
-        supabase = get_supabase_client()
-        query = supabase.table("dsa_sheets").select("*").order("topic").order("difficulty").order("id")
+        all_problems = await _get_all_problems()
+        
+        filtered_data = []
+        for prob in all_problems:
+            # 1. Topic filter
+            if topic and topic not in ("all", "undefined", "null", ""):
+                if prob.get("topic") != topic:
+                    continue
+                    
+            # 2. Difficulty filter
+            if difficulty and difficulty not in ("all", "undefined", "null", ""):
+                if prob.get("difficulty") != difficulty:
+                    continue
+                    
+            # 3. Playlist filter
+            if playlist and playlist not in ("all", "undefined", "null", ""):
+                playlists = prob.get("playlists", [])
+                if isinstance(playlists, str):
+                    import json
+                    try:
+                        playlists = json.loads(playlists)
+                    except Exception:
+                        playlists = []
+                if playlist not in playlists:
+                    continue
+                    
+            filtered_data.append(prob)
 
-        filters = []
-        # Always filter out NULL topic and difficulty values to prevent errors and ignore NULLs during filtering
-        query = query.filter("topic", "not.is", "null").filter("difficulty", "not.is", "null")
-        filters.append("topic IS NOT NULL")
-        filters.append("difficulty IS NOT NULL")
-
-        # Safe query playlist logic: If playlist is "all" or "undefined" or null/empty, query ALL rows (ignore filter)
-        if playlist and isinstance(playlist, str) and playlist not in ("all", "undefined", "null", ""):
-            query = query.filter("playlists", "cs", f'["{playlist}"]')
-            filters.append(f"playlists cs ['{playlist}']")
-
-        if topic and isinstance(topic, str) and topic not in ("all", "undefined", "null", ""):
-            query = query.filter("topic", "eq", topic)
-            filters.append(f"topic eq '{topic}'")
-
-        if difficulty and isinstance(difficulty, str) and difficulty not in ("all", "undefined", "null", ""):
-            query = query.filter("difficulty", "eq", difficulty)
-            filters.append(f"difficulty eq '{difficulty}'")
-
-        # Log exact SQL filter representation applied to DB
-        sql_filter_applied = " AND ".join(filters) if filters else "No filters applied"
-        logger.info(f"[Tracker] DB SQL filter applied: {sql_filter_applied}")
-        print(f"[Tracker] DB SQL filter applied: {sql_filter_applied}")
-
-        # To bypass Postgrest default limit of 1000 rows, fetch in pages
-        all_data = []
-        chunk_size = 1000
-        start = 0
-        while True:
-            chunk_response = query.range(start, start + chunk_size - 1).execute()
-            chunk_data = chunk_response.data
-            all_data.extend(chunk_data)
-            if len(chunk_data) < chunk_size:
-                break
-            start += chunk_size
-
-        return {"status": "success", "count": len(all_data), "data": all_data}
+        return {"status": "success", "count": len(filtered_data), "data": filtered_data}
 
     except Exception as e:
         logger.error(f"[Tracker] Failed to fetch problems: {e}")
@@ -142,17 +169,10 @@ async def get_tracker_metadata(user: dict = Depends(get_current_user)):
     Returns unique topics, difficulties, and dynamic playlist counts from the `dsa_sheets` table.
     """
     try:
-        supabase = get_supabase_client()
-        all_data = []
-        chunk_size = 1000
-        start = 0
-        while True:
-            chunk_response = supabase.table("dsa_sheets").select("topic, difficulty, playlists").order("id").range(start, start + chunk_size - 1).execute()
-            chunk_data = chunk_response.data
-            all_data.extend(chunk_data)
-            if len(chunk_data) < chunk_size:
-                break
-            start += chunk_size
+        if _STATIC_DATA_CACHE["metadata"] is not None:
+            return _STATIC_DATA_CACHE["metadata"]
+            
+        all_data = await _get_all_problems()
 
         topics = sorted(list(set(row["topic"] for row in all_data if row.get("topic"))))
         difficulties = sorted(list(set(row["difficulty"] for row in all_data if row.get("difficulty"))))
@@ -179,12 +199,14 @@ async def get_tracker_metadata(user: dict = Depends(get_current_user)):
                         else:
                             playlist_counts[pl] = 1
 
-        return {
+        metadata = {
             "status": "success",
             "topics": topics,
             "difficulties": difficulties,
             "playlist_counts": playlist_counts
         }
+        _STATIC_DATA_CACHE["metadata"] = metadata
+        return metadata
     except Exception as e:
         logger.error(f"[Tracker] Failed to fetch metadata: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch tracker metadata")
